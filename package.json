@@ -1,0 +1,12 @@
+{
+  "name": "yuba-ba",
+  "version": "1.0.0",
+  "description": "yuba-ba",
+  "main": "yuba-ba.js",
+  "scripts": {
+    "build": "node yuba-ba.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "jutaroi01",
+  "license": "ISC"
+}
