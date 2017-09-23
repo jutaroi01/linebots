@@ -74,6 +74,7 @@ app.post('/callback', function(req, res){
                 type: 'text',
                 text: 'test: ' + newName
             };
+            console.log('DEBUG: do response');
             client.replyMessage(req.body['events'][0]['replyToken'], message)
                 .then(() => {
                     console.log('DEBUG: reply success: ' + body);
