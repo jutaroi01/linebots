@@ -27,6 +27,7 @@ app.post('/callback', function(req, res){
                 console.log('DEBUG: request checked OK');
             },
             function(next) { // 新しい名前を生成
+                var oldName = req.body['events'][0]['message']['text']
                 console.log('DEBUG: create newName start');
                 // 名前は3～11文字のみ有効
                 if (oldName < 3 || oldName > 11) {
