@@ -11,6 +11,7 @@ app.use(bodyParser.json());                        // JSONのパースを楽に�
 
 app.post('/callback', function(req, res){
     console.log('DEBUG: request called');
+    console.log('DEBUG: request body: ' + JSON.stringify(req.body));
     async.waterfall([
             function(next) {
                 // リクエストがLINE Platformから送られてきたか確認する
@@ -61,6 +62,7 @@ app.post('/callback', function(req, res){
             }
         ],
         function(err, newName) {
+            console.log('DEBUG: response start');
             if(err){
                 return;
             }
