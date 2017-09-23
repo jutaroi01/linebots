@@ -10,20 +10,24 @@ app.use(bodyParser.urlencoded({extended: true}));  // JSONの送信を許可
 app.use(bodyParser.json());                        // JSONのパースを楽に（受信時）
 
 app.post('/callback', function(req, res){
-    console.log('request called');
+    console.log('DEBUG: request called');
     async.waterfall([
             function(next) {
                 // リクエストがLINE Platformから送られてきたか確認する
                 if (!validate_signature(req.headers['x-line-signature'], req.body)) {
+                    console.log('DEBUG: request header checked NG');
                     return;
                 }
                 // テキストが送られてきた場合のみ返事をする
                 if (req.body['events'][0]['type'] != 'message' ||
                     req.body['events'][0]['message']['type'] != 'text') {
+                    console.log('DEBUG: request body checked NG');
                     return;
                 }
+                console.log('DEBUG: request checked OK');
             },
             function(next) { // 新しい名前を生成
+                console.log('DEBUG: create newName start');
                 // 名前は3～11文字のみ有効
                 if (oldName < 3 || oldName > 11) {
                     console.log("名前は3～11文字のみ有効");
@@ -48,6 +52,7 @@ app.post('/callback', function(req, res){
                 array.sort().forEach(function(v, i, a) {
                     newName = newName + oldName.charAt(v);
                 })
+                console.log('DEBUG: create newName finish: ' + newName);
                 // console.log("「" + oldName + "」なんて生意気だね");
                 // console.log("今日からあんたは「" + newName + "」だよ");
                 next(newName);
