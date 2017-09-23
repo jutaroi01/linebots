@@ -2,11 +2,16 @@
   "name": "yuba-ba",
   "version": "1.0.0",
   "description": "yuba-ba",
-  "main": "yuba-ba.js",
+  "main": "./index.js",
   "scripts": {
-    "build": "node yuba-ba.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node yuba-ba.js"
   },
   "author": "jutaroi01",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "async": "^2.5.0",
+    "body-parser": "^1.18.2",
+    "express": "^4.15.4",
+    "request": "^2.82.0"
+  }
 }
