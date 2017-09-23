@@ -4,6 +4,7 @@
   "description": "yuba-ba",
   "main": "./index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "node yuba-ba.js"
   },
   "author": "jutaroi01",
