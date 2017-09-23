@@ -2,6 +2,7 @@ var async = require('async');
 var bodyParser = require('body-parser');
 var crypto = require('crypto');
 var express = require('express');
+var line = require('@line/bot-sdk');
 var request = require('request');
 
 var app = express();
@@ -66,32 +67,46 @@ app.post('/callback', function(req, res){
             if(err){
                 return;
             }
-            //ヘッダーを定義
-            var headers = {
-                'Content-Type' : 'application/json; charset=UTF-8',
-                'Authorization' : 'Bearer ' + process.env.LINE_CHANNEL_ACCESS_TOKEN
-            };
-            var data = {
-                'replyToken': req.body['events'][0]['replyToken'],
-                'messages': [{
-                    'type': 'text',
-                    'text': 'test: ' + newName
-                }]
-            };
-            //オプションを定義
-            var options = {
-                url: 'https://api.line.me/v2/bot/message/reply',
-                headers: headers,
-                json: true,
-                body: data
-            };
-            request.post(options, function(error, response, body) {
-                if (!error && response.statusCode == 200) {
-                    console.log('success: ' + body);
-                } else {
-                    console.log('error: ' + JSON.stringify(response));
-                }
+            var client = new line.Client({
+                channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN
             });
+            var message = {
+                type: 'text',
+                text: 'test: ' + newName
+            };
+            client.replyMessage(req.body['events'][0]['replyToken'], message)
+                .then(() => {
+                    console.log('DEBUG: reply success: ' + body);
+                })
+                .catch((err) => {
+                    console.log('DEBUG: reply error: ' + JSON.stringify(response));
+                });
+            // //ヘッダーを定義
+            // var headers = {
+            //     'Content-Type' : 'application/json; charset=UTF-8',
+            //     'Authorization' : 'Bearer ' + process.env.LINE_CHANNEL_ACCESS_TOKEN
+            // };
+            // var data = {
+            //     'replyToken': req.body['events'][0]['replyToken'],
+            //     'messages': [{
+            //         'type': 'text',
+            //         'text': 'test: ' + newName
+            //     }]
+            // };
+            // //オプションを定義
+            // var options = {
+            //     url: 'https://api.line.me/v2/bot/message/reply',
+            //     headers: headers,
+            //     json: true,
+            //     body: data
+            // };
+            // request.post(options, function(error, response, body) {
+            //     if (!error && response.statusCode == 200) {
+            //         console.log('success: ' + body);
+            //     } else {
+            //         console.log('error: ' + JSON.stringify(response));
+            //     }
+            // });
         });
     });
 app.listen(app.get ('port'), function() {
