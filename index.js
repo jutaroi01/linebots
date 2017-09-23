@@ -10,6 +10,7 @@ app.use(bodyParser.urlencoded({extended: true}));  // JSONの送信を許可
 app.use(bodyParser.json());                        // JSONのパースを楽に（受信時）
 
 app.post('/callback', function(req, res){
+    console.log('request called');
     async.waterfall([
             function(next) {
                 // リクエストがLINE Platformから送られてきたか確認する
