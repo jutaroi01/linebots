@@ -78,10 +78,10 @@ app.post('/callback', function(req, res){
             console.log('DEBUG: do response');
             client.replyMessage(req.body['events'][0]['replyToken'], message)
                 .then(() => {
-                    console.log('DEBUG: reply success: ' + body);
+                    console.log('DEBUG: reply success: ' + JSON.stringify(message));
                 })
                 .catch((err) => {
-                    console.log('DEBUG: reply error: ' + JSON.stringify(response));
+                    console.log('DEBUG: reply error: ' + err);
                 });
             // //ヘッダーを定義
             // var headers = {
