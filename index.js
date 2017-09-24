@@ -79,6 +79,7 @@ app.post('/callback', function(req, res){
             client.replyMessage(req.body['events'][0]['replyToken'], message)
                 .then(() => {
                     console.log('DEBUG: reply success: ' + JSON.stringify(message));
+                    return;
                 })
                 .catch((err) => {
                     console.log('DEBUG: reply error: ' + err);
