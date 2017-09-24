@@ -59,7 +59,7 @@ app.post('/callback', function(req, res){
                 console.log('DEBUG: create newName finish: ' + newName);
                 // console.log("「" + oldName + "」なんて生意気だね");
                 // console.log("今日からあんたは「" + newName + "」だよ");
-                next(newName);
+                next(null, newName);
             }
         ],
         function(err, newName) {
