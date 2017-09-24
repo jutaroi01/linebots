@@ -111,6 +111,7 @@ app.post('/callback', function(req, res) {
             // });
         });
     console.log('DEBUG: request finish');
+    res.send();
     });
 app.listen(app.get ('port'), function() {
     console.log('Node app is running');
