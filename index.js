@@ -10,7 +10,7 @@ app.set('port', (process.env.PORT || 5000));
 app.use(bodyParser.urlencoded({extended: true}));  // JSONの送信を許可
 app.use(bodyParser.json());                        // JSONのパースを楽に（受信時）
 
-app.post('/callback', function(req, res){
+app.post('/callback', function(req, res) {
     console.log('DEBUG: request called');
     console.log('DEBUG: request body: ' + JSON.stringify(req.body));
     async.waterfall([
@@ -79,7 +79,6 @@ app.post('/callback', function(req, res){
             client.replyMessage(req.body['events'][0]['replyToken'], message)
                 .then(() => {
                     console.log('DEBUG: reply success: ' + JSON.stringify(message));
-                    return;
                 })
                 .catch((err) => {
                     console.log('DEBUG: reply error: ' + err);
@@ -111,6 +110,7 @@ app.post('/callback', function(req, res){
             //     }
             // });
         });
+    console.log('DEBUG: request finish');
     });
 app.listen(app.get ('port'), function() {
     console.log('Node app is running');
