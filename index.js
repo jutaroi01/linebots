@@ -63,13 +63,14 @@ app.post('/callback', function(req, res){
             }
         ],
         function(err, newName) {
-            console.log('DEBUG: response start');
+            console.log('DEBUG: response start; err' + err);
             if(err){
                 return;
             }
             var client = new line.Client({
                 channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN
             });
+            console.log('DEBUG: process.env.LINE_CHANNEL_ACCESS_TOKEN=' + process.env.LINE_CHANNEL_ACCESS_TOKEN);
             var message = {
                 type: 'text',
                 text: 'test: ' + newName
