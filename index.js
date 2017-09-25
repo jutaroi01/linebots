@@ -11,30 +11,26 @@ app.use(bodyParser.urlencoded({extended: true}));  // JSONの送信を許可
 app.use(bodyParser.json());                        // JSONのパースを楽に（受信時）
 
 app.post('/callback', function(req, res) {
-    console.log('DEBUG: request called');
-    console.log('DEBUG: request body: ' + JSON.stringify(req.body));
     async.waterfall([
             function(next) {
                 // リクエストがLINE Platformから送られてきたか確認する
                 if (!validate_signature(req.headers['x-line-signature'], req.body)) {
-                    console.log('DEBUG: request header checked NG');
+                    console.log('ERROR: request header check NG');
                     return;
                 }
                 // テキストが送られてきた場合のみ返事をする
                 if (req.body['events'][0]['type'] != 'message' ||
                     req.body['events'][0]['message']['type'] != 'text') {
-                    console.log('DEBUG: request body checked NG');
+                    console.log('ERROR: request body check NG');
                     return;
                 }
-                console.log('DEBUG: request checked OK');
                 next();
             },
             function(next) { // 新しい名前を生成
-                console.log('DEBUG: create newName start');
                 var oldName = req.body['events'][0]['message']['text']
                 // 名前は3～11文字のみ有効
-                if (oldName < 3 || oldName > 11) {
-                    console.log("名前は3～11文字のみ有効");
+                if (oldName.length < 3 || oldName.length > 11) {
+                    console.log('ERROR: oldName length invalid. length=' + oldName.length);
                     return;
                 }
                 // 新しい名前の長さは、最小で2、最大で名前の文字数-2 or 4
@@ -52,65 +48,35 @@ app.post('/callback', function(req, res) {
                     }
                 }
                 // 配列を昇順ソートしてから新しい名前を組み立て
-                var newName = "";
+                var newName = '';
                 array.sort().forEach(function(v, i, a) {
                     newName = newName + oldName.charAt(v);
                 })
-                console.log('DEBUG: create newName finish: ' + newName);
-                // console.log("「" + oldName + "」なんて生意気だね");
-                // console.log("今日からあんたは「" + newName + "」だよ");
-                next(null, newName);
+                next(null, oldName, newName);
             }
         ],
-        function(err, newName) {
-            console.log('DEBUG: response start; err' + err);
+        function(err, oldName, newName) {
             if(err){
                 return;
             }
             var client = new line.Client({
                 channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN
             });
-            console.log('DEBUG: process.env.LINE_CHANNEL_ACCESS_TOKEN=' + process.env.LINE_CHANNEL_ACCESS_TOKEN);
-            var message = {
-                type: 'text',
-                text: 'test: ' + newName
-            };
-            console.log('DEBUG: do response');
+            var message = [{
+                    type: 'text',
+                    text: '「' + oldName + '」なんて生意気だね'
+                }, {
+                    type: 'text',
+                    text: '今日からあんたは「' + newName + '」だよ'
+                }];
             client.replyMessage(req.body['events'][0]['replyToken'], message)
                 .then(() => {
-                    console.log('DEBUG: reply success: ' + JSON.stringify(message));
+                    // console.log('DEBUG: reply success: ' + JSON.stringify(message));
                 })
                 .catch((err) => {
-                    console.log('DEBUG: reply error: ' + err);
+                    console.log('ERROR: reply error: ' + err);
                 });
-            // //ヘッダーを定義
-            // var headers = {
-            //     'Content-Type' : 'application/json; charset=UTF-8',
-            //     'Authorization' : 'Bearer ' + process.env.LINE_CHANNEL_ACCESS_TOKEN
-            // };
-            // var data = {
-            //     'replyToken': req.body['events'][0]['replyToken'],
-            //     'messages': [{
-            //         'type': 'text',
-            //         'text': 'test: ' + newName
-            //     }]
-            // };
-            // //オプションを定義
-            // var options = {
-            //     url: 'https://api.line.me/v2/bot/message/reply',
-            //     headers: headers,
-            //     json: true,
-            //     body: data
-            // };
-            // request.post(options, function(error, response, body) {
-            //     if (!error && response.statusCode == 200) {
-            //         console.log('success: ' + body);
-            //     } else {
-            //         console.log('error: ' + JSON.stringify(response));
-            //     }
-            // });
         });
-    console.log('DEBUG: request finish');
     res.send();
     });
 app.listen(app.get ('port'), function() {
