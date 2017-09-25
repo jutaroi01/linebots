@@ -63,6 +63,10 @@ app.post('/callback', function(req, res) {
                 channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN
             });
             var message = [{
+                    'type': 'image',
+                    'originalContentUrl': 'https://raw.githubusercontent.com/jutaroi01/yuba-ba/master/public/image/yuba-ba.png',
+                    'previewImageUrl': 'https://raw.githubusercontent.com/jutaroi01/yuba-ba/master/public/image/yuba-ba.png'
+                },{
                     type: 'text',
                     text: '「' + oldName + '」なんて生意気だね'
                 }, {
