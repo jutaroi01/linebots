@@ -76,9 +76,60 @@ app.post('/yubaba', function(req, res) {
                 .catch((err) => {
                     console.log('ERROR: reply error: ' + err);
                 });
-        });
-    res.send();
     });
+    res.send();
+});
+
+app.post('/sushi', function(req, res) {
+    async.waterfall([
+        function(next) {
+            if (!validateSignature(req, process.env.SUSHI_CHANNEL_SECRET)) {
+                console.log('ERROR: request header check NG');
+                return;
+            }
+            if (req.body['events'][0]['type'] != 'message' ||
+                req.body['events'][0]['message']['type'] != 'text') {
+                console.log('ERROR: request body check NG');
+                return;
+            }
+            next();
+        },
+        function(next) {
+            var ncmb = new NCMB(process.env.SUSHI_NCMB_APPKEY,
+                                process.env.SUSHI_NCMB_CLIKEY);
+            var history = new History({
+                    userId: req.body['events'][0]['source']['userId'],
+                    neta: req.body['events'][0]['message']['text']});
+            history.save()
+                .then(function(result){
+                    console.dir(result);
+                })
+                .catch(function(err){
+                    console.log(err);
+                });
+            next(null, result);
+        }],
+        function(err, result) {
+            if(err){
+                return;
+            }
+            var client = new line.Client({
+                channelAccessToken: process.env.SUSHI_ACCESS_TOKEN
+            });
+            var message = [{
+                    type: 'text',
+                    text: 'result:' + result
+                }];
+            client.replyMessage(req.body['events'][0]['replyToken'], message)
+                .then(() => {
+                    // console.log('DEBUG: reply success: ' + JSON.stringify(message));
+                })
+                .catch((err) => {
+                    console.log('ERROR: reply error: ' + err);
+                });
+    });
+    res.send();
+});
 
 app.listen(app.get ('port'), function() {
     console.log('Node app is running');
