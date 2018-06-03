@@ -105,13 +105,13 @@ app.post('/sushi', function(req, res) {
                 .set('neta', req.body['events'][0]['message']['text'])
                 .save()
                 .then(function(result){
-                    date = result;
+                    data = result;
                     console.dir(result);
                 })
                 .catch(function(err){
                     console.log(err);
                 });
-            next(null, date);
+            next(null, data);
         }],
         function(err, result) {
             if(err){
