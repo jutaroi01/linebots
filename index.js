@@ -107,11 +107,11 @@ app.post('/sushi', function(req, res) {
                 .then(function(result){
                     data = JSON.stringify(result);
                     console.log(data);
+                    next(null, data);
                 })
                 .catch(function(err){
                     console.log(err);
                 });
-            next(null, data);
         }],
         function(err, result) {
             if(err){
