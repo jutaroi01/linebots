@@ -115,19 +115,20 @@ app.post('/sushi', function(req, res) {
                     .catch(function(err){
                         console.log(err);
                     });
+            } else {
+                var history = new History();
+                history.set('userId', req.body['events'][0]['source']['userId'])
+                    .set('neta', req.body['events'][0]['message']['text'])
+                    .save()
+                    .then(function(result){
+                        data = JSON.stringify(result);
+                        console.log(data);
+                        next(null, data);
+                    })
+                    .catch(function(err){
+                        console.log(err);
+                    });
             };
-            var history = new History();
-            history.set('userId', req.body['events'][0]['source']['userId'])
-                .set('neta', req.body['events'][0]['message']['text'])
-                .save()
-                .then(function(result){
-                    data = JSON.stringify(result);
-                    console.log(data);
-                    next(null, data);
-                })
-                .catch(function(err){
-                    console.log(err);
-                });
         }],
         function(err, result) {
             if(err){
