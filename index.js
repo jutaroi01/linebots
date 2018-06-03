@@ -98,10 +98,11 @@ app.post('/sushi', function(req, res) {
         function(next) {
             var ncmb = new NCMB(process.env.SUSHI_NCMB_APPKEY,
                                 process.env.SUSHI_NCMB_CLIKEY);
-            var history = new History({
-                    userId: req.body['events'][0]['source']['userId'],
-                    neta: req.body['events'][0]['message']['text']});
-            history.save()
+            var History = ncmb.DataStore('History');
+            var history = new History();
+            history.set(userId, req.body['events'][0]['source']['userId'])
+                .set(neta, req.body['events'][0]['message']['text'])
+                .save()
                 .then(function(result){
                     console.dir(result);
                 })
