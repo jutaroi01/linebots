@@ -105,8 +105,8 @@ app.post('/sushi', function(req, res) {
                 .set('neta', req.body['events'][0]['message']['text'])
                 .save()
                 .then(function(result){
-                    data = result;
-                    console.dir(result);
+                    data = JSON.stringify(result);
+                    console.log(data);
                 })
                 .catch(function(err){
                     console.log(err);
