@@ -108,7 +108,9 @@ app.post('/sushi', function(req, res) {
                     .order('createDate')
                     .fetchAll()
                     .then(function(results){
-                        next(null, results.join('\n'));
+                        next(null, results.map(function(element){
+                                return element[neta]
+                            }).join('\n'));
                     })
                     .catch(function(err){
                         console.log(err);
