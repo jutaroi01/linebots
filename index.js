@@ -96,6 +96,7 @@ app.post('/sushi', function(req, res) {
             next();
         },
         function(next) {
+            var data;
             var ncmb = new NCMB(process.env.SUSHI_NCMB_APPKEY,
                                 process.env.SUSHI_NCMB_CLIKEY);
             var History = ncmb.DataStore('History');
@@ -104,12 +105,13 @@ app.post('/sushi', function(req, res) {
                 .set('neta', req.body['events'][0]['message']['text'])
                 .save()
                 .then(function(result){
+                    date = result;
                     console.dir(result);
                 })
                 .catch(function(err){
                     console.log(err);
                 });
-            next(null, result);
+            next(null, date);
         }],
         function(err, result) {
             if(err){
