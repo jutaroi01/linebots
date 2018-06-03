@@ -96,10 +96,24 @@ app.post('/sushi', function(req, res) {
             next();
         },
         function(next) {
+            var text = req.body['events'][0]['message']['text'];
+            var userId = req.body['events'][0]['source']['userId'];
             var data;
             var ncmb = new NCMB(process.env.SUSHI_NCMB_APPKEY,
                                 process.env.SUSHI_NCMB_CLIKEY);
             var History = ncmb.DataStore('History');
+
+            if(text == 'おあいそ'){
+                History.equalTo('userId', userId)
+                    .order('createDate')
+                    .fetchAll()
+                    .then(function(results){
+                        next(null, results.join('\n'));
+                    })
+                    .catch(function(err){
+                        console.log(err);
+                    });
+            };
             var history = new History();
             history.set('userId', req.body['events'][0]['source']['userId'])
                 .set('neta', req.body['events'][0]['message']['text'])
@@ -122,7 +136,7 @@ app.post('/sushi', function(req, res) {
             });
             var message = [{
                     type: 'text',
-                    text: 'result:' + result
+                    text: result
                 }];
             client.replyMessage(req.body['events'][0]['replyToken'], message)
                 .then(() => {
