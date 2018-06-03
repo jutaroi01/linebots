@@ -109,7 +109,7 @@ app.post('/sushi', function(req, res) {
                     .fetchAll()
                     .then(function(results){
                         next(null, results.map(function(element){
-                                return element[neta]
+                                return element['neta'];
                             }).join('\n'));
                     })
                     .catch(function(err){
