@@ -3,7 +3,8 @@ var bodyParser = require('body-parser');
 var crypto = require('crypto');
 var express = require('express');
 var line = require('@line/bot-sdk');
-var request = require('request');
+var NCMB = require("ncmb");
+// var request = require('request');
 
 var app = express();
 app.set('port', (process.env.PORT || 5000));
