@@ -108,9 +108,12 @@ app.post('/sushi', function(req, res) {
                     .order('createDate')
                     .fetchAll()
                     .then(function(results){
-                        next(null, results.map(function(element){
-                                return element['neta'];
-                            }).join('\n'));
+                        var ret = '';
+                        results.forEach(function(element){
+                            ret += element['neta'] + '\n';
+                        });
+                        ret += '\n合計 ' + results.length + '皿';
+                        next(null, ret);
                     })
                     .catch(function(err){
                         console.log(err);
