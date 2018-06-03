@@ -10,11 +10,11 @@ app.set('port', (process.env.PORT || 5000));
 app.use(bodyParser.urlencoded({extended: true}));  // JSONの送信を許可
 app.use(bodyParser.json());                        // JSONのパースを楽に（受信時）
 
-app.post('/yuba-ba', function(req, res) {
+app.post('/yubaba', function(req, res) {
     async.waterfall([
             function(next) {
                 // リクエストがLINE Platformから送られてきたか確認する
-                if (!validate_signature(req.headers['x-line-signature'], req.body)) {
+                if (!validateSignature(req, process.env.YUBABA_CHANNEL_SECRET)) {
                     console.log('ERROR: request header check NG');
                     return;
                 }
@@ -60,7 +60,7 @@ app.post('/yuba-ba', function(req, res) {
                 return;
             }
             var client = new line.Client({
-                channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN
+                channelAccessToken: process.env.YUBABA_ACCESS_TOKEN
             });
             var message = [{
                     type: 'text',
@@ -85,7 +85,7 @@ app.listen(app.get ('port'), function() {
 });
 
 // 署名検証
-function validate_signature(signature, body) {
-    return signature == crypto.createHmac('SHA256', process.env.LINE_CHANNEL_SECRET)
-        .update(new Buffer(JSON.stringify(body), 'utf8')).digest('base64');
+function validateSignature(request, secret) {
+    return request.headers['x-line-signature'] == crypto.createHmac('SHA256', secret)
+        .update(new Buffer(JSON.stringify(request.body), 'utf8')).digest('base64');
 }
