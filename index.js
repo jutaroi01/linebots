@@ -88,13 +88,11 @@ app.post('/sushi', function(req, res) {
     async.waterfall([
         function(next) {
             if (!validateSignature(req, process.env.SUSHI_CHANNEL_SECRET)) {
-                console.log('ERROR: request header check NG');
-                return;
+                next('ERROR: request header check NG');
             }
             if (req.body['events'][0]['type'] != 'message' ||
                 req.body['events'][0]['message']['type'] != 'text') {
-                console.log('ERROR: request body check NG');
-                return;
+                next('ERROR: request body check NG');
             }
             next();
         },
@@ -114,20 +112,24 @@ app.post('/sushi', function(req, res) {
                                 next(null, data);
                             })
                             .catch(function(err){
-                                console.log(err);
+                                next('save failed:' + JSON.stringify(err));
                             })
                     }
                 })
                 .catch(function(err){
-                    console.log(err);
+                    next('fetch failed:' + JSON.stringify(err));
                 });
         },
         function(tmpData, next) {
             var text = req.body['events'][0]['message']['text'];
             if(text == 'おあいそ'){
                 var ret = [];
-                ret.push(tmpData['netaArray'].join('\n'));
-                ret.push('合計 ' + tmpData['netaArray'].length + '皿食べたよ');
+                if(tmpData['netaArray'].length == 0){
+                    ret.push('まだ何も食べてないよ');
+                } else {
+                    ret.push(tmpData['netaArray'].join('\n'));
+                    ret.push('合計 ' + tmpData['netaArray'].length + '皿食べたよ');
+                }
                 next(null, ret);
             } else if(text == 'リセット'){
                 var history = new History();
@@ -138,7 +140,7 @@ app.post('/sushi', function(req, res) {
                         next(null, ['リセットしたよ']);
                     })
                     .catch(function(err){
-                        console.log(err);
+                        next('reset failed:' + JSON.stringify(err));
                     });
             } else {
                 // 改行と半角スペースを区切りとして配列化し、ついでに空要素を排除
@@ -158,13 +160,14 @@ app.post('/sushi', function(req, res) {
                         next(null, ret);
                     })
                     .catch(function(err){
-                        console.log(err);
+                        next('add failed:' + JSON.stringify(err));
                     });
             };
         }],
         function(err, result) {
             if(err){
-                return;
+                console.log(err);
+                result = [err];
             }
             var client = new line.Client({
                 channelAccessToken: process.env.SUSHI_ACCESS_TOKEN
