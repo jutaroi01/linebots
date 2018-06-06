@@ -128,7 +128,7 @@ app.post('/sushi', function(req, res) {
                     ret.push('まだ何も食べてないよ');
                 } else {
                     ret.push(tmpData['netaArray'].join('\n'));
-                    ret.push('合計' + tmpData['netaArray'].length + '皿食べたよ');
+                    ret.push('合計' + tmpData['netaArray'].length + '貫食べたよ');
                 }
                 next(null, ret);
             } else if(text == 'リセット'){
@@ -156,7 +156,7 @@ app.post('/sushi', function(req, res) {
                     .then(function(result){
                         var ret = [];
                         ret.push(newArray.join('\n'));
-                        ret.push(newArray.length + '皿追加したよ');
+                        ret.push(newArray.length + '貫追加したよ');
                         next(null, ret);
                     })
                     .catch(function(err){
