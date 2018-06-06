@@ -167,7 +167,7 @@ app.post('/sushi', function(req, res) {
         function(err, result) {
             if(err){
                 console.log(err);
-                result = [err];
+                return;
             }
             var client = new line.Client({
                 channelAccessToken: process.env.SUSHI_ACCESS_TOKEN
