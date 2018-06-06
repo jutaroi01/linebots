@@ -146,11 +146,11 @@ app.post('/sushi', function(req, res) {
                     return elem;
                 });
                 var history = new History();
+                history.set('objectId', tmpData['objectId'])
                 newArray.forEach(function(elem){
                     history.add('netaArray', elem);
                 });
-                history.set('objectId', tmpData['objectId'])
-                    .update()
+                history.update()
                     .then(function(result){
                         var ret = [];
                         ret.push(newArray.join('\n'));
