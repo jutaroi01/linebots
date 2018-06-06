@@ -82,6 +82,9 @@ app.post('/yubaba', function(req, res) {
 });
 
 app.post('/sushi', function(req, res) {
+    var ncmb = new NCMB(process.env.SUSHI_NCMB_APPKEY,
+        process.env.SUSHI_NCMB_CLIKEY);
+    var History = ncmb.DataStore('History');
     async.waterfall([
         function(next) {
             if (!validateSignature(req, process.env.SUSHI_CHANNEL_SECRET)) {
@@ -95,38 +98,63 @@ app.post('/sushi', function(req, res) {
             }
             next();
         },
-        function(next) {
-            var text = req.body['events'][0]['message']['text'];
+        function(next) { // get tmpData
             var userId = req.body['events'][0]['source']['userId'];
-            var data;
-            var ncmb = new NCMB(process.env.SUSHI_NCMB_APPKEY,
-                                process.env.SUSHI_NCMB_CLIKEY);
-            var History = ncmb.DataStore('History');
-
+            History.equalTo('userId', userId)
+                .fetch()
+                .then(function(result){
+                    if(Object.keys(result).length == 0){ // no data
+                        var history = new History();
+                        history.set('userId', userId)
+                            .set('netaArray', [])
+                            .save()
+                            .then(function(data){
+                                result = data;
+                            })
+                            .catch(function(err){
+                                console.log(err);
+                            })
+                    }
+                    next(null, result);
+                })
+                .catch(function(err){
+                    console.log(err);
+                });
+        },
+        function(tmpData, next) {
+            var text = req.body['events'][0]['message']['text'];
             if(text == 'おあいそ'){
-                History.equalTo('userId', userId)
-                    .order('createDate')
-                    .fetchAll()
-                    .then(function(results){
-                        var ret = '';
-                        results.forEach(function(element){
-                            ret += element['neta'] + '\n';
-                        });
-                        ret += '\n合計 ' + results.length + '皿';
-                        next(null, ret);
+                var ret = [];
+                ret.push(tmpData['netaArray'].join('\n'));
+                ret.push('合計 ' + tmpData['netaArray'].length + '皿食べたよ');
+                next(null, ret);
+            } else if(text == 'リセット'){
+                var history = new History();
+                history.set('objectId', tmpData['objectId'])
+                    .set('netaArray', [])
+                    .update()
+                    .then(function(result){
+                        next(null, ['リセットしたよ']);
                     })
                     .catch(function(err){
                         console.log(err);
                     });
             } else {
+                // 改行と半角スペースを区切りとして配列化し、ついでに空要素を排除
+                var newArray = text.split(/[\n\s]/).filter(function(elem){
+                    return elem;
+                });
                 var history = new History();
-                history.set('userId', req.body['events'][0]['source']['userId'])
-                    .set('neta', req.body['events'][0]['message']['text'])
-                    .save()
+                newArray.forEach(function(elem){
+                    history.add('netaArray', elem);
+                });
+                history.set('objectId', tmpData['objectId'])
+                    .update()
                     .then(function(result){
-                        data = JSON.stringify(result);
-                        console.log(data);
-                        next(null, data);
+                        var ret = [];
+                        ret.push(newArray.join('\n'));
+                        ret.push(newArray.length + '皿追加したよ');
+                        next(null, ret);
                     })
                     .catch(function(err){
                         console.log(err);
@@ -140,10 +168,13 @@ app.post('/sushi', function(req, res) {
             var client = new line.Client({
                 channelAccessToken: process.env.SUSHI_ACCESS_TOKEN
             });
-            var message = [{
+            var message = [];
+            result.forEach(function(elem){
+                message.push({
                     type: 'text',
-                    text: result
-                }];
+                    text: elem
+                })
+            });
             client.replyMessage(req.body['events'][0]['replyToken'], message)
                 .then(() => {
                     // console.log('DEBUG: reply success: ' + JSON.stringify(message));
