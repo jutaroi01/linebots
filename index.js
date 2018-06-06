@@ -103,19 +103,20 @@ app.post('/sushi', function(req, res) {
             History.equalTo('userId', userId)
                 .fetch()
                 .then(function(result){
-                    if(Object.keys(result).length == 0){ // no data
+                    if(Object.keys(result).length != 0){ // data exist
+                        next(null, result);
+                    } else {
                         var history = new History();
                         history.set('userId', userId)
                             .set('netaArray', [])
                             .save()
                             .then(function(data){
-                                result = data;
+                                next(null, data);
                             })
                             .catch(function(err){
                                 console.log(err);
                             })
                     }
-                    next(null, result);
                 })
                 .catch(function(err){
                     console.log(err);
