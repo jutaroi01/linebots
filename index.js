@@ -6,6 +6,9 @@ var line = require('@line/bot-sdk');
 var NCMB = require("ncmb");
 // var request = require('request');
 
+var sushiNCMB =
+    new NCMB(process.env.SUSHI_NCMB_APPKEY, process.env.SUSHI_NCMB_CLIKEY);
+
 var app = express();
 app.set('port', (process.env.PORT || 5000));
 app.use(bodyParser.urlencoded({extended: true}));  // JSONの送信を許可
@@ -82,120 +85,140 @@ app.post('/yubaba', function(req, res) {
 });
 
 app.post('/sushi', function(req, res) {
-    var ncmb = new NCMB(process.env.SUSHI_NCMB_APPKEY,
-        process.env.SUSHI_NCMB_CLIKEY);
-    var History = ncmb.DataStore('History');
+    var History = sushiNCMB.DataStore('History');
     async.waterfall([
-        function(next) {
-            if (!validateSignature(req, process.env.SUSHI_CHANNEL_SECRET)) {
-                next('ERROR: request header check NG');
-            }
-            if (req.body['events'][0]['type'] != 'message' ||
-                req.body['events'][0]['message']['type'] != 'text') {
-                next('ERROR: request body check NG');
-            }
-            next();
-        },
-        function(next) { // get tmpData
-            var userId = req.body['events'][0]['source']['userId'];
-            History.equalTo('userId', userId)
-                .fetch()
-                .then(function(result){
-                    if(Object.keys(result).length != 0){ // data exist
-                        next(null, result);
-                    } else {
-                        var history = new History();
-                        history.set('userId', userId)
-                            .set('netaArray', [])
-                            .save()
-                            .then(function(data){
-                                next(null, data);
-                            })
-                            .catch(function(err){
-                                next('save failed:' + JSON.stringify(err));
-                            })
-                    }
-                })
-                .catch(function(err){
-                    next('fetch failed:' + JSON.stringify(err));
-                });
-        },
-        function(tmpData, next) {
-            var text = req.body['events'][0]['message']['text'];
-            if(text == 'おあいそ'){
-                var ret = [];
-                if(tmpData['netaArray'].length == 0){
-                    ret.push('まだ何も食べてないよ');
-                } else {
-                    ret.push(tmpData['netaArray'].join('\n'));
-                    ret.push('合計' + tmpData['netaArray'].length + '貫食べたよ');
-                }
-                next(null, ret);
-            } else if(text == 'リセット'){
-                var history = new History();
-                history.set('objectId', tmpData['objectId'])
-                    .set('netaArray', [])
-                    .update()
-                    .then(function(result){
-                        next(null, ['リセットしたよ']);
-                    })
-                    .catch(function(err){
-                        next('reset failed:' + JSON.stringify(err));
-                    });
-            } else {
-                // 改行と半角スペースを区切りとして配列化し、ついでに空要素を排除
-                var newArray = text.split(/[\n\s]/).filter(function(elem){
-                    return elem;
-                });
-                var history = new History();
-                history.set('objectId', tmpData['objectId'])
-                newArray.forEach(function(elem){
-                    history.add('netaArray', elem);
-                });
-                history.update()
-                    .then(function(result){
-                        var ret = [];
-                        ret.push(newArray.join('\n'));
-                        ret.push(newArray.length + '貫追加したよ');
-                        next(null, ret);
-                    })
-                    .catch(function(err){
-                        next('add failed:' + JSON.stringify(err));
-                    });
-            };
-        }],
-        function(err, result) {
-            if(err){
-                console.log(err);
-                return;
-            }
-            var client = new line.Client({
-                channelAccessToken: process.env.SUSHI_ACCESS_TOKEN
-            });
-            var message = [];
-            result.forEach(function(elem){
-                message.push({
-                    type: 'text',
-                    text: elem
-                })
-            });
-            client.replyMessage(req.body['events'][0]['replyToken'], message)
-                .then(() => {
-                    // console.log('DEBUG: reply success: ' + JSON.stringify(message));
-                })
-                .catch((err) => {
-                    console.log('ERROR: reply error: ' + err);
-                });
-    });
+            validateSignatureTask(req, process.env.SUSHI_CHANNEL_SECRET),
+            getTmpDataTask(req.body['events'][0]['source']['userId']),
+            sushiMainTask(req.body['events'][0]['message']['text'])
+        ],
+        replyCallback(req.body['events'][0]['replyToken'], process.env.SUSHI_ACCESS_TOKEN)
+    );
     res.send();
 });
+
+// userIdを指定してNCMB上のデータを取得or存在しなければ作成する
+function getTmpDataTask(userId) {
+    return function(next) { // get tmpData
+        var History = sushiNCMB.DataStore('History');
+        History.equalTo('userId', userId)
+            .fetch()
+            .then(function(result){
+                if(Object.keys(result).length != 0){ // data exist
+                    next(null, result);
+                } else {
+                    var history = new History();
+                    history.set('userId', userId)
+                        .set('netaArray', [])
+                        .save()
+                        .then(function(data){
+                            next(null, data);
+                        })
+                        .catch(function(err){
+                            next('save failed:' + JSON.stringify(err));
+                        })
+                }
+            })
+            .catch(function(err){
+                next('fetch failed:' + JSON.stringify(err));
+            });
+    }
+}
+
+// メッセージに応じてメイン処理を実行
+function sushiMainTask(text) {
+    return function(tmpData, next) {
+        var History = sushiNCMB.DataStore('History');
+        if(text == 'おあいそ'){
+            var ret = [];
+            if(tmpData['netaArray'].length == 0){
+                ret.push('まだ何も食べてないよ');
+            } else {
+                ret.push(tmpData['netaArray'].join('\n'));
+                ret.push('合計' + tmpData['netaArray'].length + '貫食べたよ');
+            }
+            next(null, ret);
+        } else if(text == 'リセット'){
+            var history = new History();
+            history.set('objectId', tmpData['objectId'])
+                .set('netaArray', [])
+                .update()
+                .then(function(result){
+                    next(null, ['リセットしたよ']);
+                })
+                .catch(function(err){
+                    next('reset failed:' + JSON.stringify(err));
+                });
+        } else {
+            // 改行と半角スペースを区切りとして配列化し、ついでに空要素を排除
+            var newArray = text.split(/[\n\s]/).filter(function(elem){
+                return elem;
+            });
+            var history = new History();
+            history.set('objectId', tmpData['objectId'])
+            newArray.forEach(function(elem){
+                history.add('netaArray', elem);
+            });
+            history.update()
+                .then(function(result){
+                    var ret = [];
+                    ret.push(newArray.join('\n'));
+                    ret.push(newArray.length + '貫追加したよ');
+                    next(null, ret);
+                })
+                .catch(function(err){
+                    next('add failed:' + JSON.stringify(err));
+                });
+        };
+    }
+}
 
 app.listen(app.get ('port'), function() {
     console.log('Node app is running');
 });
 
+// 署名検証およびテキストか否か判定するタスク
+function validateSignatureTask(request, secret) {
+    return function(next) {
+        if (!validateSignature(request, secret)) {
+            next('ERROR: request header check NG');
+        }
+        if (request.body['events'][0]['type'] != 'message' ||
+            request.body['events'][0]['message']['type'] != 'text') {
+            next('ERROR: request body check NG');
+        }
+        next();
+    }
+}
+
 // 署名検証
 function validateSignature(request, secret) {
     return request.headers['x-line-signature'] == crypto.createHmac('SHA256', secret)
         .update(new Buffer(JSON.stringify(request.body), 'utf8')).digest('base64');
+}
+
+// 返信メッセージを作成、送信するコールバック
+function replyCallback(replyToken, accessToken) {
+    return function(error, result) {
+        if(error){
+            console.log(error);
+            return;
+        }
+        var client = new line.Client({
+            channelAccessToken: accessToken
+        });
+        var message = [];
+        result.forEach(function(elem){
+            message.push({
+                type: 'text',
+                text: elem
+            })
+        });
+        client.replyMessage(replyToken, message)
+            .then(() => {
+                // console.log('DEBUG: reply success: ' + JSON.stringify(message));
+            })
+            .catch((err) => {
+                console.log('ERROR: reply error: ' + err);
+            });
+    }
 }
