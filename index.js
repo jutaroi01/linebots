@@ -107,7 +107,7 @@ function getTmpDataTask(userId, className) {
                 } else {
                     var myClass = new MyClass();
                     myClass.set('userId', userId)
-                        .set('netaArray', [])
+                        .set('dataArray', [])
                         .save()
                         .then(function(data){
                             next(null, data);
@@ -129,17 +129,17 @@ function sushiMainTask(text) {
         var History = linebotsNCMB.DataStore('History');
         if(text == 'おあいそ'){
             var ret = [];
-            if(tmpData['netaArray'].length == 0){
+            if(tmpData['dataArray'].length == 0){
                 ret.push('まだ何も食べてないよ');
             } else {
-                ret.push(tmpData['netaArray'].join('\n'));
-                ret.push('合計' + tmpData['netaArray'].length + '貫食べたよ');
+                ret.push(tmpData['dataArray'].join('\n'));
+                ret.push('合計' + tmpData['dataArray'].length + '貫食べたよ');
             }
             next(null, ret);
         } else if(text == 'リセット'){
             var history = new History();
             history.set('objectId', tmpData['objectId'])
-                .set('netaArray', [])
+                .set('dataArray', [])
                 .update()
                 .then(function(result){
                     next(null, ['リセットしたよ']);
@@ -155,7 +155,7 @@ function sushiMainTask(text) {
             var history = new History();
             history.set('objectId', tmpData['objectId'])
             newArray.forEach(function(elem){
-                history.add('netaArray', elem);
+                history.add('dataArray', elem);
             });
             history.update()
                 .then(function(result){
