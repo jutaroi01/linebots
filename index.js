@@ -240,12 +240,12 @@ function validateSignatureTask(request, secret) {
     return function(next) {
         if (!validateSignature(request, secret)) {
             next('ERROR: request header check NG');
-        }
-        if (request.body['events'][0]['type'] != 'message' ||
+        } else if (request.body['events'][0]['type'] != 'message' ||
             request.body['events'][0]['message']['type'] != 'text') {
             next('ERROR: request body check NG');
+        } else {
+            next();
         }
-        next();
     }
 }
 
