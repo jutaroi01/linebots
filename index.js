@@ -212,21 +212,22 @@ function fandCMainTask(text) {
                 return elem;
             });
             // すべての要素がFANDC_ARRAYのいずれかにマッチすればOK
-            if(!newArray.every(function(elem){return FANDC_ARRAY.includes(elem);})) {
+            if(newArray.every(function(elem){return FANDC_ARRAY.includes(elem);})) {
+                var fandc = new FandC();
+                fandc.set('objectId', tmpData['objectId'])
+                newArray.forEach(function(elem){
+                    fandc.add('dataArray', elem);
+                });
+                fandc.update()
+                    .then(function(result){
+                        next(null, [result['dataArray'].join('アンド')]);
+                    })
+                    .catch(function(err){
+                        next('add failed:' + JSON.stringify(err));
+                    });
+            } else {
                 next(null, ['は？']);
             }
-            var fandc = new FandC();
-            fandc.set('objectId', tmpData['objectId'])
-            newArray.forEach(function(elem){
-                fandc.add('dataArray', elem);
-            });
-            fandc.update()
-                .then(function(result){
-                    next(null, [result['dataArray'].join('アンド')]);
-                })
-                .catch(function(err){
-                    next('add failed:' + JSON.stringify(err));
-                });
         };
     }
 }
