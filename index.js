@@ -87,7 +87,7 @@ app.post('/yubaba', function(req, res) {
 app.post('/sushi', function(req, res) {
     async.waterfall([
             validateSignatureTask(req, process.env.SUSHI_CHANNEL_SECRET),
-            getTmpDataTask(req.body['events'][0]['source']['userId'], 'History'),
+            getTmpDataTask(req.body['events'][0]['source']['userId'], 'Sushi'),
             sushiMainTask(req.body['events'][0]['message']['text'])
         ],
         replyCallback(req.body['events'][0]['replyToken'], process.env.SUSHI_ACCESS_TOKEN)
@@ -126,7 +126,7 @@ function getTmpDataTask(userId, className) {
 // メッセージに応じてメイン処理を実行
 function sushiMainTask(text) {
     return function(tmpData, next) {
-        var History = linebotsNCMB.DataStore('History');
+        var Sushi = linebotsNCMB.DataStore('Sushi');
         if(text == 'おあいそ'){
             var ret = [];
             if(tmpData['dataArray'].length == 0){
@@ -137,8 +137,8 @@ function sushiMainTask(text) {
             }
             next(null, ret);
         } else if(text == 'リセット'){
-            var history = new History();
-            history.set('objectId', tmpData['objectId'])
+            var sushi = new Sushi();
+            sushi.set('objectId', tmpData['objectId'])
                 .set('dataArray', [])
                 .update()
                 .then(function(result){
@@ -152,12 +152,12 @@ function sushiMainTask(text) {
             var newArray = text.split(/[\n\s]/).filter(function(elem){
                 return elem;
             });
-            var history = new History();
-            history.set('objectId', tmpData['objectId'])
+            var sushi = new Sushi();
+            sushi.set('objectId', tmpData['objectId'])
             newArray.forEach(function(elem){
-                history.add('dataArray', elem);
+                sushi.add('dataArray', elem);
             });
-            history.update()
+            sushi.update()
                 .then(function(result){
                     var ret = [];
                     ret.push(newArray.join('\n'));
