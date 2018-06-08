@@ -182,7 +182,8 @@ app.post('/fandc', function(req, res) {
     res.send();
 });
 
-var FANDC_ARRAY = ['フィッシュ', 'チップス']
+var FANDC_ARRAY = ['フィッシュ', 'チップス', 'ふぃっしゅ', 'ちっぷす',
+                   'fish', 'chips', 'Fish', 'Chips', 'FISH', 'CHIPS']
 
 function fandCMainTask(text) {
     return function(tmpData, next) {
@@ -192,7 +193,7 @@ function fandCMainTask(text) {
             if(tmpData['dataArray'].length == 0){
                 ret.push('いいから食え');
             } else {
-                ret.push(tmpData['dataArray'].join('アンド'));
+                ret.push(tmpData['dataArray'].join('&'));
             }
             next(null, ret);
         } else if(text == 'リセット'){
@@ -220,7 +221,7 @@ function fandCMainTask(text) {
                 });
                 fandc.update()
                     .then(function(result){
-                        next(null, [tmpData['dataArray'].concat(newArray).join('アンド')]);
+                        next(null, [tmpData['dataArray'].concat(newArray).join('&')]);
                     })
                     .catch(function(err){
                         next('add failed:' + JSON.stringify(err));
