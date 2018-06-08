@@ -6,7 +6,7 @@ var line = require('@line/bot-sdk');
 var NCMB = require("ncmb");
 // var request = require('request');
 
-var sushiNCMB =
+var linebotsNCMB =
     new NCMB(process.env.SUSHI_NCMB_APPKEY, process.env.SUSHI_NCMB_CLIKEY);
 
 var app = express();
@@ -85,10 +85,9 @@ app.post('/yubaba', function(req, res) {
 });
 
 app.post('/sushi', function(req, res) {
-    var History = sushiNCMB.DataStore('History');
     async.waterfall([
             validateSignatureTask(req, process.env.SUSHI_CHANNEL_SECRET),
-            getTmpDataTask(req.body['events'][0]['source']['userId']),
+            getTmpDataTask(req.body['events'][0]['source']['userId'], 'History'),
             sushiMainTask(req.body['events'][0]['message']['text'])
         ],
         replyCallback(req.body['events'][0]['replyToken'], process.env.SUSHI_ACCESS_TOKEN)
@@ -97,17 +96,17 @@ app.post('/sushi', function(req, res) {
 });
 
 // userIdを指定してNCMB上のデータを取得or存在しなければ作成する
-function getTmpDataTask(userId) {
+function getTmpDataTask(userId, className) {
     return function(next) { // get tmpData
-        var History = sushiNCMB.DataStore('History');
-        History.equalTo('userId', userId)
+        var MyClass = linebotsNCMB.DataStore(className);
+        MyClass.equalTo('userId', userId)
             .fetch()
             .then(function(result){
                 if(Object.keys(result).length != 0){ // data exist
                     next(null, result);
                 } else {
-                    var history = new History();
-                    history.set('userId', userId)
+                    var myClass = new MyClass();
+                    myClass.set('userId', userId)
                         .set('netaArray', [])
                         .save()
                         .then(function(data){
@@ -127,7 +126,7 @@ function getTmpDataTask(userId) {
 // メッセージに応じてメイン処理を実行
 function sushiMainTask(text) {
     return function(tmpData, next) {
-        var History = sushiNCMB.DataStore('History');
+        var History = linebotsNCMB.DataStore('History');
         if(text == 'おあいそ'){
             var ret = [];
             if(tmpData['netaArray'].length == 0){
