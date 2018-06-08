@@ -220,7 +220,7 @@ function fandCMainTask(text) {
                 });
                 fandc.update()
                     .then(function(result){
-                        next(null, [result['dataArray'].join('アンド')]);
+                        next(null, [tmpData['dataArray'].concat(newArray).join('アンド')]);
                     })
                     .catch(function(err){
                         next('add failed:' + JSON.stringify(err));
