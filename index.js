@@ -171,6 +171,66 @@ function sushiMainTask(text) {
     }
 }
 
+app.post('/fandc', function(req, res) {
+    async.waterfall([
+            validateSignatureTask(req, process.env.FANDC_CHANNEL_SECRET),
+            getTmpDataTask(req.body['events'][0]['source']['userId'], 'FandC'),
+            fandCMainTask(req.body['events'][0]['message']['text'])
+        ],
+        replyCallback(req.body['events'][0]['replyToken'], process.env.FANDC_ACCESS_TOKEN)
+    );
+    res.send();
+});
+
+var FANDC_ARRAY = ['フィッシュ', 'チップス']
+
+function fandCMainTask(text) {
+    return function(tmpData, next) {
+        var FandC = linebotsNCMB.DataStore('FandC');
+        if(text == 'トータル'){
+            var ret = [];
+            if(tmpData['dataArray'].length == 0){
+                ret.push('いいから食え');
+            } else {
+                ret.push(tmpData['dataArray'].join('アンド'));
+            }
+            next(null, ret);
+        } else if(text == 'リセット'){
+            var fandc = new FandC();
+            fandc.set('objectId', tmpData['objectId'])
+                .set('dataArray', [])
+                .update()
+                .then(function(result){
+                    next(null, ['ゼロから食え']);
+                })
+                .catch(function(err){
+                    next('reset failed:' + JSON.stringify(err));
+                });
+        } else {
+            // 改行と半角スペースを区切りとして配列化し、ついでに空要素を排除
+            var newArray = text.split(/[\n\s]/).filter(function(elem){
+                return elem;
+            });
+            // すべての要素がFANDC_ARRAYのいずれかにマッチすればOK
+            if(!newArray.every(function(elem){return FANDC_ARRAY.includes(elem);})) {
+                next(null, ['は？']);
+            }
+            var fandc = new FandC();
+            fandc.set('objectId', tmpData['objectId'])
+            newArray.forEach(function(elem){
+                fandc.add('dataArray', elem);
+            });
+            fandc.update()
+                .then(function(result){
+                    next(null, [result['dataArray'].join('アンド')]);
+                })
+                .catch(function(err){
+                    next('add failed:' + JSON.stringify(err));
+                });
+        };
+    }
+}
+
 app.listen(app.get ('port'), function() {
     console.log('Node app is running');
 });
